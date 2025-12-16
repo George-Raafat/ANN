@@ -6,8 +6,13 @@ import Initialization.WeightInitializer;
 import Loss.LossFunction;
 import Loss.MeanSquaredError;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class NeuralNetwork {
     private final Layer[] layers;
+    private final int numClasses;
     private LossFunction lossFunction = new MeanSquaredError();
     private double learningRate = 0.1;
     private int batchSize = 10;
@@ -19,6 +24,7 @@ public class NeuralNetwork {
         for (int i = 0; i < layers.length; i++) {
             layers[i] = new Layer(layerSizes[i], layerSizes[i + 1], activationFunction, weightInitializer);
         }
+        numClasses = layerSizes[layerSizes.length - 1];
     }
 
     public NeuralNetwork(int[] layerSizes, WeightInitializer weightInitializer) {
@@ -26,7 +32,7 @@ public class NeuralNetwork {
     }
 
     private int MaxValueIndex(double[] values) {
-        double maxValue = Double.MIN_VALUE;
+        double maxValue = Double.NEGATIVE_INFINITY;
         int index = 0;
         for (int i = 0; i < values.length; i++) {
             if (values[i] > maxValue) {
@@ -63,17 +69,22 @@ public class NeuralNetwork {
         return lossFunction.calculateLoss(output, expected);
     }
 
-    public void train(double[][] trainingData, double[][] expected) {
+    public void train(double[][] trainingData, int[] labelIndices) {
         int n = trainingData.length;
+
+        List<Integer> order = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) order.add(i);
 
         for (int epoch = 0; epoch < epochs; epoch++) {
             double epochLoss = 0.0;
+            Collections.shuffle(order);
 
             for (int i = 0; i < n; i += batchSize) {
                 int end = Math.min(i + batchSize, n);
 
                 for (int j = i; j < end; j++) {
-                    epochLoss += backwordPropagation(trainingData[j], expected[j]);
+                    double[] expected = oneHot(labelIndices[order.get(j)]);
+                    epochLoss += backwordPropagation(trainingData[order.get(j)], expected);
                 }
 
                 for (Layer layer : layers) {
@@ -96,7 +107,7 @@ public class NeuralNetwork {
         }
     }
 
-    public void setBatchSize(int batchSize){
+    public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
     }
 
@@ -106,5 +117,11 @@ public class NeuralNetwork {
 
     public void setLearningRate(double learningRate) {
         this.learningRate = learningRate;
+    }
+
+    private double[] oneHot(int label) {
+        double[] y = new double[numClasses];
+        y[label] = 1.0;
+        return y;
     }
 }

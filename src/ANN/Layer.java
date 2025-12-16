@@ -60,7 +60,7 @@ public class Layer {
         return newSubDeltas;
     }
 
-    public void applyGradients(double learningRate, int batchSize){
+    public void applyGradients(double learningRate, int batchSize) {
         double scale = learningRate / batchSize;
 
         for (int i = 0; i < weights.length; i++) {
