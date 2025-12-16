@@ -8,8 +8,10 @@ import Loss.MeanSquaredError;
 
 public class NeuralNetwork {
     private final Layer[] layers;
-    NetworkLearnData[] batchLearnData;
     private LossFunction lossFunction = new MeanSquaredError();
+    private double learningRate = 0.1;
+    private int batchSize = 10;
+    private int epochs = 10;
 
     // Create the neural network
     public NeuralNetwork(int[] layerSizes, WeightInitializer weightInitializer, ActivationFunction activationFunction) {
@@ -23,14 +25,23 @@ public class NeuralNetwork {
         this(layerSizes, weightInitializer, new Sigmoid());
     }
 
-    // Run the inputs through the network to predict which class they belong to.
-    // Also returns the activations from the output layer.
+    private int MaxValueIndex(double[] values) {
+        double maxValue = Double.MIN_VALUE;
+        int index = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] > maxValue) {
+                maxValue = values[i];
+                index = i;
+            }
+        }
+        return index;
+    }
+
     public int Classify(double[] inputs) {
         double[] outputs = feedForward(inputs);
         return MaxValueIndex(outputs);
     }
 
-    // Run the inputs through the network to calculate the outputs
     public double[] feedForward(double[] inputs) {
         for (Layer layer : layers) {
             inputs = layer.CalculateOutputs(inputs);
@@ -38,54 +49,41 @@ public class NeuralNetwork {
         return inputs;
     }
 
-
-    public void Learn(DataPoint[] trainingData, double learnRate) {
-
-        if (batchLearnData == null || batchLearnData.length != trainingData.length) {
-            batchLearnData = new NetworkLearnData[trainingData.length];
-            for (int i = 0; i < batchLearnData.length; i++) {
-                batchLearnData[i] = new NetworkLearnData(layers);
-            }
+    public double backwordPropagation(double[] trainingData, double[] expected) {
+        double[] output = feedForward(trainingData);
+        double[] subdeltas = new double[output.length];
+        for (int i = 0; i < output.length; i++) {
+            double costDerivative = lossFunction.derivative(output[i], expected[i]);
+            subdeltas[i] = costDerivative;
         }
-
-        for (int i = 0; i < trainingData.length; i++) {
-            UpdateGradients(trainingData[i], batchLearnData[i]);
+        for (int i = layers.length - 1; i > 0; i--) {
+            subdeltas = layers[i].accumulateGradients(subdeltas, layers[i - 1].getActivations());
         }
-        // Update weights and biases based on the calculated gradients
-        for (Layer layer : layers) {
-            layer.ApplyGradients(learnRate / trainingData.length);
-        }
+        layers[0].accumulateGradients(subdeltas, trainingData);
+        return lossFunction.calculateLoss(output, expected);
     }
 
+    public void train(double[][] trainingData, double[][] expected) {
+        int n = trainingData.length;
 
-    void UpdateGradients(DataPoint data, NetworkLearnData learnData) {
-        // Feed data through the network to calculate outputs.
-        // Save all inputs/weightedInputs/activations along the way to use for backpropagation.
-        double[] inputsToNextLayer = data.inputs;
+        for (int epoch = 0; epoch < epochs; epoch++) {
+            double epochLoss = 0.0;
 
-        for (int i = 0; i < layers.length; i++) {
-            inputsToNextLayer = layers[i].CalculateOutputs(inputsToNextLayer, learnData.layerData[i]);
+            for (int i = 0; i < n; i += batchSize) {
+                int end = Math.min(i + batchSize, n);
+
+                for (int j = i; j < end; j++) {
+                    epochLoss += backwordPropagation(trainingData[j], expected[j]);
+                }
+
+                for (Layer layer : layers) {
+                    layer.applyGradients(learningRate, end - i);
+                }
+            }
+
+            epochLoss /= n;
+            System.out.println("Epoch " + (epoch + 1) + " | Loss: " + epochLoss);
         }
-
-        // -- Backpropagation --
-        int outputLayerIndex = layers.length - 1;
-        Layer outputLayer = layers[outputLayerIndex];
-        LayerLearnData outputLearnData = learnData.layerData[outputLayerIndex];
-
-        // Update output layer gradients
-        outputLayer.CalculateOutputLayerNodeValues(outputLearnData, data.expectedOutputs, lossFunction);
-        outputLayer.UpdateGradients(outputLearnData);
-
-        // Update all hidden layer gradients
-        for (int i = outputLayerIndex - 1; i >= 0; i--) {
-            LayerLearnData layerLearnData = learnData.layerData[i];
-            Layer hiddenLayer = layers[i];
-
-            hiddenLayer.CalculateHiddenLayerNodeValues(layerLearnData, layers[i + 1],
-                    learnData.layerData[i + 1].nodeValues);
-            hiddenLayer.UpdateGradients(layerLearnData);
-        }
-
     }
 
     public void setLossFunction(LossFunction lossFunction) {
@@ -98,15 +96,15 @@ public class NeuralNetwork {
         }
     }
 
-    private int MaxValueIndex(double[] values) {
-        double maxValue = Double.MIN_VALUE;
-        int index = 0;
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] > maxValue) {
-                maxValue = values[i];
-                index = i;
-            }
-        }
-        return index;
+    public void setBatchSize(int batchSize){
+        this.batchSize = batchSize;
+    }
+
+    public void setEpochs(int epochs) {
+        this.epochs = epochs;
+    }
+
+    public void setLearningRate(double learningRate) {
+        this.learningRate = learningRate;
     }
 }
