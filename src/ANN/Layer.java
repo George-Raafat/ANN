@@ -3,7 +3,12 @@ package ANN;
 import Activation.ActivationFunction;
 import Initialization.WeightInitializer;
 
-public class Layer {
+import java.io.Serial;
+import java.io.Serializable;
+
+public class Layer implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     public final int numNodesIn;
     public final int numNodesOut;
 
@@ -30,16 +35,15 @@ public class Layer {
     }
 
     // Calculate layer output activations
-    public double[] CalculateOutputs(double[] inputs) {
+    public double[] calculateOutputs(double[] inputs) {
         for (int nodeOut = 0; nodeOut < numNodesOut; nodeOut++) {
-            double weightedInput = getWeight(numNodesIn, nodeOut); // bias
+            int base = nodeOut * (numNodesIn + 1);
+            double weightedInput = weights[base + numNodesIn]; // bias
             for (int nodeIn = 0; nodeIn < numNodesIn; nodeIn++) {
-                weightedInput += inputs[nodeIn] * getWeight(nodeIn, nodeOut);
+                weightedInput += inputs[nodeIn] * weights[base + nodeIn];
             }
             weightedInputs[nodeOut] = weightedInput;
-        }
-        for (int outputNode = 0; outputNode < numNodesOut; outputNode++) {
-            activations[outputNode] = activationFunction.activate(weightedInputs[outputNode]);
+            activations[nodeOut] = activationFunction.activate(weightedInput);
         }
         return activations;
     }
@@ -47,15 +51,13 @@ public class Layer {
     public double[] accumulateGradients(double[] subdeltas, double[] prevInput) {
         double[] newSubDeltas = new double[numNodesIn];
         for (int nodeOut = 0; nodeOut < numNodesOut; nodeOut++) {
+            int base = nodeOut * (numNodesIn + 1);
             double delta = subdeltas[nodeOut] * activationFunction.derivative(weightedInputs[nodeOut]);
-            int weightIndex;
             for (int nodeIn = 0; nodeIn < numNodesIn; nodeIn++) {
-                weightIndex = getFlatWeightIndex(nodeIn, nodeOut);
-                newSubDeltas[nodeIn] += delta * weights[weightIndex];
-                gradients[weightIndex] += delta * prevInput[nodeIn];
+                newSubDeltas[nodeIn] += delta * weights[base + nodeIn];
+                gradients[base + nodeIn] += delta * prevInput[nodeIn];
             }
-            weightIndex = getFlatWeightIndex(numNodesIn, nodeOut);
-            gradients[weightIndex] += delta; // bias
+            gradients[base + numNodesIn] += delta; // bias
         }
         return newSubDeltas;
     }
@@ -67,15 +69,6 @@ public class Layer {
             weights[i] -= scale * gradients[i];
             gradients[i] = 0.0;
         }
-    }
-
-    public double getWeight(int nodeIn, int nodeOut) {
-        int flatIndex = nodeOut * (numNodesIn + 1) + nodeIn;
-        return weights[flatIndex];
-    }
-
-    public int getFlatWeightIndex(int inputNeuronIndex, int outputNeuronIndex) {
-        return outputNeuronIndex * (numNodesIn + 1) + inputNeuronIndex;
     }
 
     public void setActivationFunction(ActivationFunction activationFunction) {
