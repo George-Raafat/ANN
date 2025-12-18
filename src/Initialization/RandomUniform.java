@@ -2,9 +2,9 @@ package Initialization;
 
 import java.util.Random;
 
-public class RandomUniform implements WeightInitializer{
+public class RandomUniform implements WeightInitializer {
 
-    Random random = new Random();
+    private final Random random = new Random();
 
     @Override
     public double[] init(int nInput, int nOutput) {

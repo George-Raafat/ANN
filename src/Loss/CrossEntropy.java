@@ -18,8 +18,9 @@ public class CrossEntropy implements LossFunction {
     @Override
     public double derivative(double predictedOutput, double expectedOutput) {
         predictedOutput = clamp(predictedOutput);
-        return - (expectedOutput / predictedOutput);
+        return -(expectedOutput / predictedOutput);
     }
+
     private double clamp(double value) {
         return Math.max(EPSILON, Math.min(1.0 - EPSILON, value));
     }

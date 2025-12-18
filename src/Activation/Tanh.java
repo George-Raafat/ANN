@@ -1,6 +1,11 @@
 package Activation;
 
-public class Tanh implements ActivationFunction {
+import java.io.Serial;
+import java.io.Serializable;
+
+public class Tanh implements ActivationFunction, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Override
     public double activate(double input) {

@@ -1,11 +1,10 @@
 package Loss;
 
-public class MeanSquaredError implements LossFunction{
+public class MeanSquaredError implements LossFunction {
     @Override
     public double calculateLoss(double[] predictedOutputs, double[] expectedOutputs) {
         double loss = 0;
-        for (int i = 0; i < predictedOutputs.length; i++)
-        {
+        for (int i = 0; i < predictedOutputs.length; i++) {
             double error = predictedOutputs[i] - expectedOutputs[i];
             loss += error * error;
         }
