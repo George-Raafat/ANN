@@ -3,6 +3,7 @@ package ANN;
 import Activation.ActivationFunction;
 import Activation.Sigmoid;
 import Data.DataHandler;
+import Initialization.RandomUniform;
 import Initialization.WeightInitializer;
 import Loss.LossFunction;
 import Loss.MeanSquaredError;
@@ -45,6 +46,10 @@ public class NeuralNetwork implements Serializable {
 
     public NeuralNetwork(int[] layerSizes, WeightInitializer weightInitializer) {
         this(layerSizes, weightInitializer, new Sigmoid());
+    }
+
+    public NeuralNetwork(int[] layerSizes) {
+        this(layerSizes, new RandomUniform(), new Sigmoid());
     }
 
     private void validateInputs(double[][] inputs) {

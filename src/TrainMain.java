@@ -1,7 +1,6 @@
 import ANN.NeuralNetwork;
 import Data.DataHandler;
 import Data.Dataset;
-import Initialization.RandomUniform;
 import utils.LabelEncoder;
 import utils.ModelIO;
 import utils.TrainedModel;
@@ -19,10 +18,7 @@ public class TrainMain {
         final int NUM_CLASSES = 10;
 
         // Create ANN
-        NeuralNetwork nn = new NeuralNetwork(
-                new int[]{IMAGE_SIZE * IMAGE_SIZE, 50, 25, NUM_CLASSES},
-                new RandomUniform()
-        );
+        NeuralNetwork nn = new NeuralNetwork(new int[]{IMAGE_SIZE * IMAGE_SIZE, 50, 25, NUM_CLASSES});
 
         // Load training data
         Dataset dataset = loadDataset("images", encoder, 1000);
