@@ -6,6 +6,9 @@ The goal of this project is to design and implement a feed-forward artificial ne
 
 This project serves as a case study in applying fully connected neural networks to image-based classification problems and demonstrates how a custom neural network library can be used for training, evaluation, and inference.
 
+### Dataset Link
+https://quickdraw.withgoogle.com/data
+
 ---
 
 ## 2. Dataset Description and Preprocessing
